@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Amauta · Generador de Propuestas</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --y:#F0C800;--b:#0f0f0f;--bg:#141414;--card:#1a1a1a;--border:#252525;
+  --gt:#666;--gm:#444;--w:#f0f0f0;--red:#e05555;--green:#5ecf7e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--w);font-family:'Barlow',sans-serif;min-height:100vh}
+
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 32px;border-bottom:1px solid var(--border);
+  background:#111;position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-text .l1{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;letter-spacing:.12em;color:var(--w)}
+.logo-text .l2{font-family:'Montserrat',sans-serif;font-size:9px;font-weight:500;letter-spacing:.18em;color:var(--gt);text-transform:uppercase}
+.header-tag{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--y);
+  background:rgba(240,200,0,.08);border:1px solid rgba(240,200,0,.2);padding:5px 12px;border-radius:3px}
+
+.main{display:grid;grid-template-columns:560px 1fr;min-height:calc(100vh - 61px)}
+.panel-left{background:#111;border-right:1px solid var(--border);padding:28px 28px;overflow-y:auto;max-height:calc(100vh - 61px)}
+.panel-right{padding:28px 32px;overflow-y:auto;max-height:calc(100vh - 61px)}
+@media(max-width:1100px){.main{grid-template-columns:1fr}}
+
+.section{margin-bottom:24px}
+.sec-title{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--y);
+  border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:14px}
+
+label{display:block;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--gt);margin-bottom:5px}
+input[type=text],textarea,select{
+  width:100%;background:#0f0f0f;border:1px solid var(--border);color:var(--w);
+  font-family:'Barlow',sans-serif;font-size:13px;padding:9px 12px;border-radius:4px;
+  outline:none;transition:border .15s;appearance:none;-webkit-appearance:none}
+input:focus,textarea:focus,select:focus{border-color:rgba(240,200,0,.4)}
+input::placeholder,textarea::placeholder{color:#2a2a2a}
+textarea{resize:vertical;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{margin-bottom:12px}
+
+/* gender badge */
+.gender-hint{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--gt);
+  margin-top:4px;height:14px;transition:color .2s}
+.gender-hint.m{color:#6ab0e0}
+.gender-hint.f{color:#e09bb0}
+
+/* Instrument cards */
+.inst-list{display:flex;flex-direction:column;gap:6px}
+.inst-card{background:var(--card);border:1px solid var(--border);border-radius:6px;overflow:hidden;transition:border .15s}
+.inst-card.active{border-color:rgba(240,200,0,.35)}
+.inst-header{display:flex;align-items:center;gap:10px;padding:11px 14px;user-select:none}
+.inst-check{width:18px;height:18px;border:1.5px solid var(--gm);border-radius:3px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.inst-card.active .inst-check{background:var(--y);border-color:var(--y)}
+.inst-check svg{display:none}
+.inst-card.active .inst-check svg{display:block}
+.inst-name{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;letter-spacing:.04em;flex:1}
+.pct-input{width:56px!important;background:#0f0f0f!important;border:1px solid var(--border)!important;
+  border-radius:3px;text-align:center;font-family:'Montserrat',sans-serif!important;
+  font-size:12px!important;font-weight:700;color:var(--y)!important;padding:4px 6px!important}
+.pct-input:focus{border-color:rgba(240,200,0,.5)!important}
+.inst-body{display:none;padding:0 14px 14px;border-top:1px solid var(--border)}
+.inst-card.active .inst-body{display:block}
+
+/* pct bar */
+.pct-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);
+  padding:10px 14px;border-radius:6px;margin-bottom:16px}
+.pct-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gt)}
+.pct-track{flex:1;height:4px;background:#222;border-radius:2px;overflow:hidden}
+.pct-fill{height:100%;background:var(--y);transition:width .3s;border-radius:2px}
+.pct-val{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:800;min-width:38px;text-align:right}
+.pct-val.ok{color:var(--green)} .pct-val.over{color:var(--red)}
+
+/* OCR upload area */
+.ocr-zone{
+  border:1.5px dashed var(--border);border-radius:6px;padding:12px;
+  text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-top:10px}
+.ocr-zone:hover{border-color:rgba(240,200,0,.4);background:rgba(240,200,0,.02)}
+.ocr-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ocr-zone .oz-text{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--gt)}
+.ocr-zone .oz-sub{font-size:11px;color:#333;margin-top:3px;font-family:'Barlow',sans-serif}
+.ocr-status{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;margin-top:8px;min-height:16px;text-align:center}
+.ocr-status.loading{color:var(--y)}
+.ocr-status.ok{color:var(--green)}
+.ocr-status.err{color:var(--red)}
+
+/* Table builder */
+.tbl-builder{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+.tbl-builder th{background:var(--y);color:#000;font-family:'Montserrat',sans-serif;
+  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 8px}
+.tbl-builder td{background:#0f0f0f;border-bottom:1px solid #1a1a1a;padding:4px 6px}
+.tbl-builder td input{background:transparent;border:none;color:var(--w);font-size:11px;
+  font-family:'Barlow',sans-serif;width:100%;padding:1px 2px;outline:none}
+.tbl-builder td input:focus{background:rgba(240,200,0,.04)}
+.add-row-btn{background:none;border:1px dashed #222;color:#333;font-family:'Montserrat',sans-serif;
+  font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:5px;
+  width:100%;cursor:pointer;margin-top:3px;border-radius:3px;transition:all .15s}
+.add-row-btn:hover{border-color:var(--y);color:var(--y)}
+.del-row{background:none;border:none;color:#2a2a2a;cursor:pointer;font-size:12px;
+  padding:1px 5px;transition:color .15s;line-height:1}
+.del-row:hover{color:var(--red)}
+.img-upload-zone{border:1.5px dashed var(--border);border-radius:6px;padding:12px 14px;
+  cursor:pointer;transition:all .2s;margin-top:8px;margin-bottom:4px}
+.img-upload-zone:hover{border-color:rgba(240,200,0,.5);background:rgba(240,200,0,.02)}
+.img-preview-empty{display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-family:"Montserrat",sans-serif;font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--gt);text-align:center}
+.img-hint{font-size:9px;color:#333;text-transform:none;letter-spacing:0;font-weight:400;font-family:"Barlow",sans-serif}
+.img-preview-loaded{width:100%;border-radius:4px;display:block;max-height:180px;object-fit:contain;background:#0a0a0a}
+.img-change-btn{font-family:"Montserrat",sans-serif;font-size:9px;color:var(--gt);
+  text-align:center;margin-top:4px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase}
+.img-change-btn:hover{color:var(--y)}
+.ticker-row{display:grid;grid-template-columns:90px 1fr 22px;gap:8px;align-items:start;margin-bottom:8px}
+.ticker-row input.ticker-sym{font-family:"Montserrat",sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;background:#0a0a0a;border:1px solid var(--border);
+  color:var(--y);padding:8px 10px;border-radius:4px;outline:none;width:100%}
+.ticker-row input.ticker-sym:focus{border-color:rgba(240,200,0,.4)}
+.ticker-row textarea.ticker-desc{background:#0a0a0a;border:1px solid var(--border);color:#ccc;
+  font-family:"Barlow",sans-serif;font-size:12px;padding:8px 10px;border-radius:4px;
+  outline:none;resize:none;width:100%;line-height:1.5;height:58px}
+.ticker-row textarea.ticker-desc:focus{border-color:rgba(240,200,0,.2)}
+.ticker-del{background:none;border:none;color:#2a2a2a;cursor:pointer;font-size:14px;
+  padding:8px 4px;transition:color .15s;line-height:1;align-self:start;margin-top:2px}
+.ticker-del:hover{color:var(--red)}
+.add-ticker-btn{background:none;border:1px dashed #252525;color:#444;cursor:pointer;
+  font-family:"Montserrat",sans-serif;font-size:10px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;padding:7px;width:100%;border-radius:4px;transition:all .15s;margin-top:2px}
+.add-ticker-btn:hover{border-color:var(--y);color:var(--y)}
+.paste-zone{margin-bottom:6px}
+.paste-zone textarea{width:100%;background:#0a0a0a;border:1px solid var(--border);color:#aaa;
+  font-family:'Barlow',sans-serif;font-size:12px;padding:8px;border-radius:4px;
+  outline:none;resize:vertical;margin-bottom:6px;line-height:1.4}
+.paste-zone textarea:focus{border-color:rgba(240,200,0,.3)}
+.parse-btn{background:none;border:1px solid var(--border);color:var(--gt);cursor:pointer;
+  font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;padding:6px 12px;border-radius:4px;transition:all .15s;white-space:nowrap}
+.parse-btn:hover{border-color:var(--y);color:var(--y)}
+.parse-btn.active{background:var(--y);border-color:var(--y);color:#000;padding:7px 14px;width:100%}
+.parse-btn.active:hover{background:#ffd700}
+
+/* FCI simple fields */
+.simple-block{margin-top:10px}
+
+/* gen button */
+.gen-btn{width:100%;background:var(--y);color:#000;border:none;cursor:pointer;
+  font-family:'Montserrat',sans-serif;font-size:12px;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;padding:14px;border-radius:5px;
+  transition:all .2s;margin-top:6px}
+.gen-btn:hover{background:#ffd700;transform:translateY(-1px)}
+.gen-btn:active{transform:translateY(0)}
+
+/* output */
+.out-tabs{display:flex;border-bottom:1px solid var(--border)}
+.out-tab{background:none;border:none;color:var(--gt);cursor:pointer;
+  font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:11px 18px;border-bottom:2px solid transparent;
+  transition:all .15s;margin-bottom:-1px}
+.out-tab.active{color:var(--y);border-bottom-color:var(--y)}
+.out-tab:hover:not(.active){color:var(--w)}
+.out-panel{display:none;margin-top:20px}
+.out-panel.active{display:block}
+
+.mail-preview{background:#fff;color:#222;border-radius:6px;padding:32px 36px;
+  font-family:Arial,sans-serif;font-size:14px;line-height:1.7;box-shadow:0 0 0 1px #ddd}
+.mail-preview h2{color:#F0C800;font-size:15px;font-weight:700;margin:22px 0 6px}
+.mail-preview p{margin-bottom:12px;color:#333}
+.mail-preview ul{margin:6px 0 12px 20px;color:#333}
+.mail-preview li{margin-bottom:3px}
+.mail-preview strong{color:#111}
+.mail-preview em{color:#666;font-size:13px}
+.mail-preview table{border-collapse:collapse;margin:10px 0 14px}
+.mail-preview table th{background:#F0C800;color:#000;font-size:11px;font-weight:700;
+  padding:7px 12px;text-align:left;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.mail-preview table td{background:#fff;border:1px solid #e5e5e5;padding:6px 12px;font-size:13px;color:#333;white-space:nowrap}
+.mail-preview table tr:nth-child(even) td{background:#fffdf0}
+
+.text-out{background:#0f0f0f;border:1px solid var(--border);border-radius:6px;padding:20px;
+  font-family:'Barlow',sans-serif;font-size:13px;line-height:1.8;color:#ccc;white-space:pre-wrap;min-height:200px}
+
+.copy-btn{background:var(--card);border:1px solid var(--border);color:var(--gt);cursor:pointer;
+  font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:7px 14px;border-radius:4px;transition:all .15s;margin-bottom:12px}
+.copy-btn:hover{border-color:var(--y);color:var(--y)}
+.copy-btn.copied{border-color:var(--green);color:var(--green)}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:60px 20px;color:var(--gm);text-align:center}
+.empty-state .es-icon{font-size:36px;opacity:.25}
+.empty-state p{font-family:'Montserrat',sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;line-height:1.7}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="32" height="32" viewBox="0 0 40 40">
+      <polygon points="20,2 38,20 20,38 2,20" fill="none" stroke="#F0C800" stroke-width="2"/>
+      <line x1="20" y1="6" x2="20" y2="34" stroke="#F0C800" stroke-width="1.2" opacity=".5"/>
+      <line x1="6" y1="20" x2="34" y2="20" stroke="#F0C800" stroke-width="1.2" opacity=".5"/>
+      <circle cx="20" cy="20" r="3" fill="#F0C800" opacity=".7"/>
+    </svg>
+    <div class="logo-text">
+      <div class="l1">AMAUTA</div>
+      <div class="l2">Inversiones Financieras</div>
+    </div>
+  </div>
+  <span class="header-tag">Generador de Propuestas</span>
+</header>
+
+<div class="main">
+
+<!-- ══ LEFT ══ -->
+<div class="panel-left">
+
+  <div class="section">
+    <div class="sec-title">Cliente</div>
+    <div class="field">
+      <label>Nombre completo</label>
+      <input type="text" id="cli-nombre" placeholder="Ej: Santiago López" oninput="detectGender()"/>
+      <div class="gender-hint" id="gender-hint"></div>
+    </div>
+    <div class="field">
+      <label>Contexto de la propuesta</label>
+      <textarea id="cli-contexto" rows="2" placeholder="Ej: Según lo conversado con Florencia, buscás equilibrio entre rendimiento y liquidez..."></textarea>
+    </div>
+  </div>
+
+  <!-- Instrumentos -->
+  <div class="section">
+    <div class="sec-title">Instrumentos</div>
+    <div class="pct-bar">
+      <span class="pct-label">Total</span>
+      <div class="pct-track"><div class="pct-fill" id="pct-fill" style="width:0%"></div></div>
+      <span class="pct-val" id="pct-total">0%</span>
+    </div>
+    <div class="inst-list">
+
+      <!-- FCI / MM -->
+      <div class="inst-card" id="card-fci">
+        <div class="inst-header">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleInst('fci')">
+            <div class="inst-check"><svg width="10" height="8" viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <span class="inst-name">FCI / Money Market</span>
+          </div>
+          <input type="number" class="pct-input" id="pct-fci" value="" min="0" max="100" oninput="updatePct()" placeholder="%"/>
+          <span style="color:var(--gt);font-size:11px;margin-left:3px">%</span>
+        </div>
+        <div class="inst-body">
+          <div class="simple-block">
+            <div class="field"><label>Nombre del fondo</label>
+              <input type="text" id="fci-nombre" placeholder="Ej: Consultatio Renta Nacional"/></div>
+            <div class="row2">
+              <div class="field"><label>Rescate</label><input type="text" id="fci-rescate" placeholder="Ej: T+1"/></div>
+              <div class="field"><label>Rendimiento</label><input type="text" id="fci-rend" placeholder="Ej: TNA 30%"/></div>
+            </div>
+            <div class="field"><label>Descripción breve</label>
+              <textarea id="fci-desc" rows="2" placeholder="Ej: Fondo de baja volatilidad orientado a preservar el capital con liquidez inmediata..."></textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LECAPS -->
+      <div class="inst-card" id="card-lecap">
+        <div class="inst-header">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleInst('lecap')">
+            <div class="inst-check"><svg width="10" height="8" viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <span class="inst-name">Lecaps / Letras</span>
+          </div>
+          <input type="number" class="pct-input" id="pct-lecap" value="" min="0" max="100" oninput="updatePct()" placeholder="%"/>
+          <span style="color:var(--gt);font-size:11px;margin-left:3px">%</span>
+        </div>
+        <div class="inst-body">
+          <div class="field" style="margin-top:10px"><label>Foco / descripción corta</label>
+            <input type="text" id="lecap-foco" placeholder="Ej: fijar tasa · vencimientos cortos"/></div>
+          <div class="img-upload-zone" onclick="document.getElementById('img-lecap').click()">
+            <input type="file" id="img-lecap" accept="image/*" style="display:none" onchange="previewImg(this,'lecap')"/>
+            <div id="img-preview-lecap" class="img-preview-empty">
+              <span>📷</span><span>Adjuntar captura de Reuters</span>
+              <span class="img-hint">Se incluirá como imagen en el mail</span>
+            </div>
+          </div>
+          <div class="row2" style="margin-top:12px">
+            <div class="field"><label>Recomendado (ticker)</label><input type="text" id="lecap-rec" placeholder="Ej: S16M6"/></div>
+            <div class="field"><label>Vencimiento</label><input type="text" id="lecap-venc" placeholder="Ej: 16 de marzo 2026"/></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>TNA aprox.</label><input type="text" id="lecap-tna" placeholder="Ej: 35%"/></div>
+            <div class="field"><label>Rend. directo</label><input type="text" id="lecap-rd" placeholder="Ej: 3,65%"/></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BONCER -->
+      <div class="inst-card" id="card-boncer">
+        <div class="inst-header">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleInst('boncer')">
+            <div class="inst-check"><svg width="10" height="8" viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <span class="inst-name">Bonos CER (Boncer)</span>
+          </div>
+          <input type="number" class="pct-input" id="pct-boncer" value="" min="0" max="100" oninput="updatePct()" placeholder="%"/>
+          <span style="color:var(--gt);font-size:11px;margin-left:3px">%</span>
+        </div>
+        <div class="inst-body">
+          <div class="field" style="margin-top:10px"><label>Foco / descripción corta</label>
+            <input type="text" id="boncer-foco" placeholder="Ej: resguardo real · vencimientos medios"/></div>
+          <div class="img-upload-zone" onclick="document.getElementById('img-boncer').click()">
+            <input type="file" id="img-boncer" accept="image/*" style="display:none" onchange="previewImg(this,'boncer')"/>
+            <div id="img-preview-boncer" class="img-preview-empty">
+              <span>📷</span><span>Adjuntar captura de Reuters</span>
+              <span class="img-hint">Se incluirá como imagen en el mail</span>
+            </div>
+          </div>
+          <div class="row2" style="margin-top:12px">
+            <div class="field"><label>Recomendado (ticker)</label><input type="text" id="boncer-rec" placeholder="Ej: X31L6"/></div>
+            <div class="field"><label>Vencimiento</label><input type="text" id="boncer-venc" placeholder="Ej: 31 de julio 2026"/></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Plazo</label><input type="text" id="boncer-dias" placeholder="Ej: 175 días"/></div>
+            <div class="field"><label>TIR real</label><input type="text" id="boncer-tir" placeholder="Ej: 6,63% + CER"/></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONs -->
+      <div class="inst-card" id="card-on">
+        <div class="inst-header">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleInst('on')">
+            <div class="inst-check"><svg width="10" height="8" viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <span class="inst-name">Obligaciones Negociables</span>
+          </div>
+          <input type="number" class="pct-input" id="pct-on" value="" min="0" max="100" oninput="updatePct()" placeholder="%"/>
+          <span style="color:var(--gt);font-size:11px;margin-left:3px">%</span>
+        </div>
+        <div class="inst-body">
+          <div class="field" style="margin-top:10px"><label>Foco / descripción corta</label>
+            <input type="text" id="on-foco" placeholder="Ej: renta fija corporativa en dólares"/></div>
+          <div class="img-upload-zone" onclick="document.getElementById('img-on').click()">
+            <input type="file" id="img-on" accept="image/*" style="display:none" onchange="previewImg(this,'on')"/>
+            <div id="img-preview-on" class="img-preview-empty">
+              <span>📷</span><span>Adjuntar captura de Reuters</span>
+              <span class="img-hint">Se incluirá como imagen en el mail</span>
+            </div>
+          </div>
+          <div class="row2" style="margin-top:12px">
+            <div class="field"><label>ON recomendada</label><input type="text" id="on-rec" placeholder="Ej: YPF 2029"/></div>
+            <div class="field"><label>TIR USD aprox.</label><input type="text" id="on-tir" placeholder="Ej: 7,5% USD"/></div>
+          </div>
+          <div class="field">
+            <label>Vencimiento</label><input type="text" id="on-venc" placeholder="Ej: julio 2029"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hard Dollar -->
+      <div class="inst-card" id="card-hd">
+        <div class="inst-header">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleInst('hd')">
+            <div class="inst-check"><svg width="10" height="8" viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <span class="inst-name">Bonos Hard Dollar</span>
+          </div>
+          <input type="number" class="pct-input" id="pct-hd" value="" min="0" max="100" oninput="updatePct()" placeholder="%"/>
+          <span style="color:var(--gt);font-size:11px;margin-left:3px">%</span>
+        </div>
+        <div class="inst-body">
+          <div class="field" style="margin-top:10px"><label>Foco / descripción corta</label>
+            <input type="text" id="hd-foco" placeholder="Ej: soberanos ley NY · carry en dólares"/></div>
+          <div class="img-upload-zone" onclick="document.getElementById('img-hd').click()">
+            <input type="file" id="img-hd" accept="image/*" style="display:none" onchange="previewImg(this,'hd')"/>
+            <div id="img-preview-hd" class="img-preview-empty">
+              <span>📷</span><span>Adjuntar captura de Reuters</span>
+              <span class="img-hint">Se incluirá como imagen en el mail</span>
+            </div>
+          </div>
+          <div class="row2" style="margin-top:12px">
+            <div class="field"><label>Bono recomendado</label><input type="text" id="hd-rec" placeholder="Ej: AL30 / GD35"/></div>
+            <div class="field"><label>TIR USD aprox.</label><input type="text" id="hd-tir" placeholder="Ej: 11% USD"/></div>
+          </div>
+          <div class="field"><label>Paridad</label><input type="text" id="hd-paridad" placeholder="Ej: 62%"/></div>
+        </div>
+      </div>
+
+      <!-- CEDEARs -->
+      <div class="inst-card" id="card-cedear">
+        <div class="inst-header">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="toggleInst('cedear')">
+            <div class="inst-check"><svg width="10" height="8" viewBox="0 0 10 8"><polyline points="1,4 4,7 9,1" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <span class="inst-name">Acciones / CEDEARs</span>
+          </div>
+          <input type="number" class="pct-input" id="pct-cedear" value="" min="0" max="100" oninput="updatePct()" placeholder="%"/>
+          <span style="color:var(--gt);font-size:11px;margin-left:3px">%</span>
+        </div>
+        <div class="inst-body">
+          <div class="field" style="margin-top:10px"><label>Foco / descripción corta</label>
+            <input type="text" id="cedear-foco" placeholder="Ej: exposición a renta variable global · cobertura dólar"/></div>
+          <div class="field">
+            <label>Acciones / CEDEARs a incluir</label>
+            <div id="cedear-tickers"></div>
+            <button class="add-ticker-btn" onclick="addTicker()">+ Agregar acción / CEDEAR</button>
+          </div>
+          <div class="field">
+            <label>Cierre del bloque <span style="color:#444;font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+            <textarea id="cedear-cierre" rows="2" placeholder="Ej: Esta parte de la cartera busca capturar el crecimiento de largo plazo combinando exposición global con componente defensivo..."></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /inst-list -->
+  </div>
+
+  <!-- Cierre -->
+  <div class="section">
+    <div class="sec-title">Cierre</div>
+    <div class="field">
+      <label>Frase de cierre</label>
+      <textarea id="cierre" rows="2">Quedo atento a tus comentarios y, si te parece bien, lo vemos juntos para ajustar cualquier punto o avanzar con la implementación.</textarea>
+    </div>
+  </div>
+
+  <button class="gen-btn" onclick="generate()">⚡ Generar propuesta</button>
+</div>
+
+<!-- ══ RIGHT ══ -->
+<div class="panel-right">
+  <div class="out-tabs">
+    <button class="out-tab active" id="tab-preview" onclick="switchOut('preview')">📧 Vista mail</button>
+    <button class="out-tab" id="tab-text" onclick="switchOut('text')">📋 Texto plano</button>
+  </div>
+
+  <div class="out-panel active" id="out-preview">
+    <div class="empty-state" id="empty-preview">
+      <div class="es-icon">✉</div>
+      <p>Completá los datos y<br/>presioná "Generar propuesta"</p>
+    </div>
+    <div id="mail-content" style="display:none">
+      <button class="copy-btn" id="copy-html-btn" onclick="copyHTML()">⬇ Copiar para pegar en Gmail</button>
+      <div class="mail-preview" id="mail-preview-body"></div>
+    </div>
+  </div>
+
+  <div class="out-panel" id="out-text">
+    <button class="copy-btn" id="copy-text-btn" onclick="copyText()">⬇ Copiar texto</button>
+    <div class="text-out" id="text-out">Generá la propuesta para ver el texto aquí.</div>
+  </div>
+</div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────
+var activeInsts = {};
+var imgData = {}; // stores base64 per instrument
+
+// ─── Gender detection ─────────────────────────────────────
+var MALE_NAMES   = ["Santiago","Facundo","Nicolas","Matias","Gonzalo","Diego","Lucas","Martin","Pablo","Andres","Carlos","Juan","Luis","Jorge","Ricardo","Fernando","Alejandro","Roberto","Daniel","Mario","Miguel","Eduardo","Alberto","Manuel","Jose","Francisco","Sebastian","Gustavo","Ignacio","Rafael","Victor","Hernan","Cristian","Marcelo","Claudio","Sergio","Javier","Hugo","Rodolfo","Oscar","Walter","Julio","Ruben","Adrian","Leandro","Agustin","Bruno","Franco","Tomas","Emiliano","Ariel","Ezequiel","Maximiliano","Leonardo","Raul","Hector","Ramon","Ernesto","Guillermo","Patricio","Damian","Fabian","Nestor","Osvaldo","Horacio","Esteban","Ivan","Marcos","Gaston","Federico","Nahuel","Lautaro","Santino","Thiago","Valentino","Bautista","Ignacio","Ramiro","Hernan","Joaquin","Augusto","Cesar"];
+var FEMALE_NAMES = ["Maria","Ana","Laura","Carolina","Valentina","Florencia","Camila","Daniela","Paula","Lucia","Sofia","Martina","Natalia","Patricia","Sandra","Claudia","Monica","Alejandra","Andrea","Gabriela","Veronica","Silvia","Cristina","Elena","Isabel","Rosa","Carmen","Beatriz","Graciela","Liliana","Marcela","Susana","Norma","Raquel","Viviana","Valeria","Cecilia","Roxana","Romina","Paola","Julieta","Vanesa","Sabrina","Melina","Micaela","Agustina","Belen","Nadia","Soledad","Mariela","Lorena","Gisela","Noelia","Cintia","Daiana","Brenda","Marisol","Miriam","Adriana","Alina","Analia","Estela","Fernanda","Gloria","Ines","Irene","Jimena","Karina","Nora","Olga","Pilar","Silvana","Teresa","Yesica","Zoe","Abril","Bianca","Candela","Delfina","Emilia","Gina","Helena","Julia","Lara","Mia","Nina","Renata","Vera"];
+
+function detectGender() {
+  var nombre = document.getElementById("cli-nombre").value.trim();
+  var hint = document.getElementById("gender-hint");
+  if (!nombre) { hint.textContent = ""; hint.className = "gender-hint"; return; }
+  var first = nombre.split(" ")[0];
+  var fu = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  var gender = "m";
+  if (FEMALE_NAMES.indexOf(fu) >= 0) gender = "f";
+  else if (MALE_NAMES.indexOf(fu) >= 0) gender = "m";
+  else if (fu.slice(-1).toLowerCase() === "a" && fu.length > 2) gender = "f";
+  hint.className = "gender-hint " + gender;
+  hint.textContent = gender === "f" ? "→ Estimada" : "→ Estimado";
+}
+
+function getGender() {
+  var cl = document.getElementById("gender-hint").className;
+  return cl.indexOf(" f") >= 0 ? "f" : "m";
+}
+
+// ─── Image upload & preview ───────────────────────────────
+function previewImg(input, inst) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    imgData[inst] = e.target.result; // full data URL
+    var container = document.getElementById("img-preview-" + inst);
+    container.className = "";
+    container.innerHTML =
+      "<img class='img-preview-loaded' src='" + e.target.result + "'/>" +
+      "<div class='img-change-btn' onclick=\"document.getElementById('img-" + inst + "').click()\">✎ Cambiar imagen</div>";
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── Instrument toggle ────────────────────────────────────
+function toggleInst(id) {
+  var card = document.getElementById("card-" + id);
+  if (!card) return;
+  var nowActive = !card.classList.contains("active");
+  card.classList.toggle("active", nowActive);
+  activeInsts[id] = nowActive;
+  updatePct();
+}
+
+// ─── Pct bar ──────────────────────────────────────────────
+function updatePct() {
+  var ids = ["fci","lecap","boncer","on","hd","cedear"];
+  var total = 0;
+  for (var i = 0; i < ids.length; i++) {
+    if (activeInsts[ids[i]]) {
+      var el = document.getElementById("pct-" + ids[i]);
+      if (el) total += parseInt(el.value) || 0;
+    }
+  }
+  var pct  = Math.min(total, 100);
+  var fill = document.getElementById("pct-fill");
+  var val  = document.getElementById("pct-total");
+  if (fill) { fill.style.width = pct + "%"; fill.style.background = total > 100 ? "#e05555" : total === 100 ? "#5ecf7e" : "#F0C800"; }
+  if (val)  { val.textContent = total + "%"; val.className = "pct-val" + (total > 100 ? " over" : total === 100 ? " ok" : ""); }
+}
+
+// ─── Tab switch ───────────────────────────────────────────
+function switchOut(tab) {
+  ["preview","text"].forEach(function(t) {
+    document.getElementById("tab-" + t).classList.toggle("active", t === tab);
+    document.getElementById("out-" + t).classList.toggle("active", t === tab);
+  });
+}
+
+// ─── Instrument explanations ──────────────────────────────
+function explLecap(rec, tna, rd, venc) {
+  var h = "<p>Las <strong>Lecaps</strong> son letras del Tesoro argentino que permiten fijar una tasa desde el momento de la compra. El rendimiento se obtiene al vencimiento, sin pago de cupones intermedios.</p>";
+  if (rec) {
+    h += "<p>En <strong>" + rec + "</strong>:</p><ul>";
+    if (venc) h += "<li><strong>Vencimiento:</strong> " + venc + "</li>";
+    if (tna)  h += "<li><strong>TNA aprox.:</strong> " + tna + "</li>";
+    if (rd)   h += "<li><strong>Rendimiento directo al vencimiento:</strong> " + rd + "</li>";
+    h += "</ul><p><em>El rendimiento directo es lo que ganás si mantenés la letra hasta su vencimiento sin venderla antes.</em></p>";
+  }
+  return h;
+}
+function explBoncer(rec, tir, venc, dias) {
+  var h = "<p>Los <strong>Boncer</strong> son títulos del Tesoro que ajustan su capital por el índice CER (inflación). Tu inversión no pierde poder adquisitivo, y además obtenés un rendimiento real por encima de la inflación.</p>";
+  if (rec) {
+    h += "<p>En <strong>" + rec + "</strong>:</p><ul>";
+    if (venc) h += "<li><strong>Vencimiento:</strong> " + venc + "</li>";
+    if (dias) h += "<li><strong>Plazo:</strong> " + dias + "</li>";
+    if (tir)  h += "<li><strong>Tasa Real (TIR):</strong> aprox. " + tir + "</li>";
+    h += "</ul>";
+  }
+  return h;
+}
+function explON(rec, tir, venc) {
+  var h = "<p>Las <strong>Obligaciones Negociables (ONs)</strong> son bonos de empresas privadas argentinas que pagan en dólares y devuelven el capital al vencimiento. Ofrecen renta previsible en moneda dura con respaldo corporativo.</p>";
+  if (rec) {
+    h += "<p>ON recomendada: <strong>" + rec + "</strong>";
+    if (tir)  h += " &nbsp;·&nbsp; TIR: <strong>" + tir + "</strong>";
+    if (venc) h += " &nbsp;·&nbsp; Vencimiento: <strong>" + venc + "</strong>";
+    h += "</p>";
+  }
+  return h;
+}
+function explHD(rec, tir, paridad) {
+  var h = "<p>Los <strong>bonos soberanos hard dollar</strong> son títulos del Estado argentino que pagan en dólares billetes. Ofrecen carry en moneda dura y potencial de apreciación ante compresión del riesgo país.</p>";
+  if (rec) {
+    h += "<p>Bono recomendado: <strong>" + rec + "</strong>";
+    if (tir)     h += " &nbsp;·&nbsp; TIR: <strong>" + tir + "</strong>";
+    if (paridad) h += " &nbsp;·&nbsp; Paridad: <strong>" + paridad + "</strong>";
+    h += "</p>";
+  }
+  return h;
+}
+function explCedear(tickers, cierre) {
+  var h = "<p>Los <strong>CEDEARs</strong> son certificados que representan acciones de empresas que cotizan en el exterior (NYSE, Nasdaq). Permiten invertir en pesos con exposición global y cobertura cambiaria al tipo de cambio contado con liquidación.</p>";
+  if (tickers && tickers.length) {
+    h += "<ul>";
+    for (var i = 0; i < tickers.length; i++) {
+      var t = tickers[i];
+      if (t.sym || t.desc) {
+        h += "<li>";
+        if (t.sym)  h += "<strong>" + t.sym + "</strong>";
+        if (t.sym && t.desc) h += ": ";
+        if (t.desc) h += t.desc;
+        h += "</li>";
+      }
+    }
+    h += "</ul>";
+  }
+  if (cierre) h += "<p>" + cierre + "</p>";
+  return h;
+}
+function explFCI(nombre, rescate, rend, desc) {
+  var h = desc ? "<p>" + desc + "</p>" : "<p>Los <strong>Fondos Comunes de Inversión de Renta en Pesos</strong> invierten en instrumentos de corto plazo buscando superar la tasa de los plazos fijos con alta liquidez.</p>";
+  if (rescate || rend) {
+    h += "<p>📅 Rescate: <strong>" + (rescate || "—") + "</strong>";
+    if (rend) h += " &nbsp;·&nbsp; Rendimiento aprox.: <strong>" + rend + "</strong>";
+    h += "</p>";
+  }
+  return h;
+}
+
+// ─── Ticker list (CEDEARs / Acciones) ────────────────────
+var tickerCount = 0;
+
+function addTicker() {
+  var container = document.getElementById("cedear-tickers");
+  var id = "tk-" + (++tickerCount);
+  var row = document.createElement("div");
+  row.className = "ticker-row";
+  row.id = id;
+
+  var sym = document.createElement("input");
+  sym.type = "text";
+  sym.className = "ticker-sym";
+  sym.placeholder = "Ej: SPY";
+
+  var desc = document.createElement("textarea");
+  desc.className = "ticker-desc";
+  desc.placeholder = "Ej: Replica el S&P 500, dando exposición a las 500 empresas más grandes de EE.UU.";
+
+  var del = document.createElement("button");
+  del.className = "ticker-del";
+  del.textContent = "✕";
+  del.onclick = function() { row.remove(); };
+
+  row.appendChild(sym);
+  row.appendChild(desc);
+  row.appendChild(del);
+  container.appendChild(row);
+}
+
+
+function getTickers() {
+  var rows = document.querySelectorAll("#cedear-tickers .ticker-row");
+  var result = [];
+  for (var i = 0; i < rows.length; i++) {
+    var sym  = rows[i].querySelector(".ticker-sym").value.trim().toUpperCase();
+    var desc = rows[i].querySelector(".ticker-desc").value.trim();
+    if (sym || desc) result.push({ sym: sym, desc: desc });
+  }
+  return result;
+}
+
+// ─── Generate ─────────────────────────────────────────────
+function generate() {
+  var nombre      = document.getElementById("cli-nombre").value.trim() || "cliente";
+  var primerNombre = nombre.split(" ")[0];
+  var trato       = getGender() === "f" ? "Estimada" : "Estimado";
+  var contexto    = document.getElementById("cli-contexto").value.trim();
+  var cierre      = document.getElementById("cierre").value.trim();
+
+  var instOrder = ["fci","lecap","boncer","on","hd","cedear"];
+  var sections  = [];
+
+  for (var i = 0; i < instOrder.length; i++) {
+    var id = instOrder[i];
+    if (!activeInsts[id]) continue;
+    var pctEl = document.getElementById("pct-" + id);
+    var s = { type: id, pct: pctEl ? pctEl.value : "", img: imgData[id] || null };
+
+    if (id === "fci") {
+      s.nombre  = document.getElementById("fci-nombre").value;
+      s.rescate = document.getElementById("fci-rescate").value;
+      s.rend    = document.getElementById("fci-rend").value;
+      s.desc    = document.getElementById("fci-desc").value;
+    } else if (id === "lecap") {
+      s.foco = document.getElementById("lecap-foco").value || "fijar tasa · vencimientos cortos";
+      s.rec  = document.getElementById("lecap-rec").value;
+      s.venc = document.getElementById("lecap-venc").value;
+      s.tna  = document.getElementById("lecap-tna").value;
+      s.rd   = document.getElementById("lecap-rd").value;
+    } else if (id === "boncer") {
+      s.foco = document.getElementById("boncer-foco").value || "resguardo real · vencimientos medios";
+      s.rec  = document.getElementById("boncer-rec").value;
+      s.venc = document.getElementById("boncer-venc").value;
+      s.dias = document.getElementById("boncer-dias").value;
+      s.tir  = document.getElementById("boncer-tir").value;
+    } else if (id === "on") {
+      s.foco = document.getElementById("on-foco").value || "renta fija corporativa en dólares";
+      s.rec  = document.getElementById("on-rec").value;
+      s.tir  = document.getElementById("on-tir").value;
+      s.venc = document.getElementById("on-venc") ? document.getElementById("on-venc").value : "";
+    } else if (id === "hd") {
+      s.foco    = document.getElementById("hd-foco").value || "soberanos hard dollar";
+      s.rec     = document.getElementById("hd-rec").value;
+      s.tir     = document.getElementById("hd-tir").value;
+      s.paridad = document.getElementById("hd-paridad").value;
+    } else if (id === "cedear") {
+      s.foco    = document.getElementById("cedear-foco").value || "renta variable · cobertura dólar";
+      s.tickers = getTickers();
+      s.cierre  = document.getElementById("cedear-cierre") ? document.getElementById("cedear-cierre").value.trim() : "";
+    }
+    sections.push(s);
+  }
+
+  if (!sections.length) { alert("Seleccioná al menos un instrumento."); return; }
+
+  var htmlOut = buildHTML(primerNombre, trato, contexto, sections, cierre);
+  var textOut = buildText(primerNombre, trato, contexto, sections, cierre);
+
+  document.getElementById("empty-preview").style.display = "none";
+  document.getElementById("mail-content").style.display  = "block";
+  document.getElementById("mail-preview-body").innerHTML = htmlOut;
+  document.getElementById("text-out").textContent = textOut;
+}
+
+// ─── HTML Builder ─────────────────────────────────────────
+function buildHTML(primerNombre, trato, contexto, sections, cierre) {
+  var h = "<p><strong>" + trato + " " + primerNombre + "</strong>, ¿cómo estás?</p>";
+
+  if (contexto) {
+    h += "<p>" + contexto + "</p>";
+  } else {
+    var labels = [];
+    for (var i = 0; i < sections.length; i++) {
+      var s = sections[i];
+      var n = {fci:"FCI/Money Market",lecap:"Lecaps",boncer:"Boncer",on:"ONs",hd:"Hard Dollar",cedear:"CEDEARs"}[s.type];
+      labels.push(s.pct ? "<strong>" + s.pct + "% en " + n + "</strong>" : "<strong>" + n + "</strong>");
+    }
+    h += "<p>Te comparto la propuesta de inversión que preparamos para vos: " + labels.join(" · ") + ".</p>";
+  }
+
+  for (var i = 0; i < sections.length; i++) {
+    var s = sections[i];
+    var titleMap = {
+      fci:    (s.pct ? s.pct + "% en " : "") + (s.nombre || "FCI · Money Market"),
+      lecap:  (s.pct ? s.pct + "% en Lecap: " : "Lecap: ") + s.foco,
+      boncer: (s.pct ? s.pct + "% en Boncer: " : "Boncer: ") + s.foco,
+      on:     (s.pct ? s.pct + "% en ONs: " : "ONs: ") + s.foco,
+      hd:     (s.pct ? s.pct + "% en Hard Dollar: " : "Hard Dollar: ") + s.foco,
+      cedear: (s.pct ? s.pct + "% en CEDEARs: " : "CEDEARs: ") + s.foco
+    };
+    h += "<h2>" + titleMap[s.type] + "</h2>";
+
+    // Explanation + recommended data
+    if      (s.type === "fci")    h += explFCI(s.nombre, s.rescate, s.rend, s.desc);
+    else if (s.type === "lecap")  h += explLecap(s.rec, s.tna, s.rd, s.venc);
+    else if (s.type === "boncer") h += explBoncer(s.rec, s.tir, s.venc, s.dias);
+    else if (s.type === "on")     h += explON(s.rec, s.tir, s.venc);
+    else if (s.type === "hd")     h += explHD(s.rec, s.tir, s.paridad);
+    else if (s.type === "cedear") h += explCedear(s.tickers, s.cierre);
+
+    // Embed image if uploaded
+    if (s.img) {
+      h += "<p><img src='" + s.img + "' style='max-width:100%;border-radius:4px;margin:8px 0'/></p>";
+    }
+  }
+
+  h += "<p>" + cierre + "</p>";
+  return h;
+}
+
+// ─── Text Builder ─────────────────────────────────────────
+function buildText(primerNombre, trato, contexto, sections, cierre) {
+  var t = trato + " " + primerNombre + ", ¿cómo estás?\n\n";
+  if (contexto) { t += contexto + "\n\n"; }
+  else {
+    var labels = [];
+    for (var i = 0; i < sections.length; i++) {
+      var s = sections[i];
+      var n = {fci:"FCI",lecap:"Lecaps",boncer:"Boncer",on:"ONs",hd:"Hard Dollar",cedear:"CEDEARs"}[s.type];
+      labels.push(s.pct ? s.pct + "% en " + n : n);
+    }
+    t += "Propuesta: " + labels.join(" | ") + "\n\n";
+  }
+  t += "------------------------------------------------\n\n";
+
+  for (var i = 0; i < sections.length; i++) {
+    var s = sections[i];
+    var titleMap = {
+      fci:    (s.pct||"") + "% en " + (s.nombre||"FCI"),
+      lecap:  (s.pct||"") + "% en Lecap: " + (s.foco||""),
+      boncer: (s.pct||"") + "% en Boncer: " + (s.foco||""),
+      on:     (s.pct||"") + "% en ONs: " + (s.foco||""),
+      hd:     (s.pct||"") + "% en Hard Dollar: " + (s.foco||""),
+      cedear: (s.pct||"") + "% en CEDEARs: " + (s.foco||"")
+    };
+    t += "▶ " + titleMap[s.type] + "\n\n";
+    if (s.type === "lecap" && s.rec)   { t += "Recomendado: " + s.rec; if(s.venc) t+=" | Vencimiento: "+s.venc; if(s.tna) t+=" | TNA: "+s.tna; if(s.rd) t+=" | Rend. directo: "+s.rd; t+="\n"; }
+    if (s.type === "boncer" && s.rec)  { t += "Recomendado: " + s.rec; if(s.venc) t+=" | Vencimiento: "+s.venc; if(s.dias) t+=" | Plazo: "+s.dias; if(s.tir) t+=" | TIR: "+s.tir; t+="\n"; }
+    if (s.type === "on" && s.rec)      { t += "ON: " + s.rec; if(s.tir) t+=" | TIR: "+s.tir; if(s.venc) t+=" | Venc: "+s.venc; t+="\n"; }
+    if (s.type === "hd" && s.rec)      { t += "Bono: " + s.rec; if(s.tir) t+=" | TIR: "+s.tir; if(s.paridad) t+=" | Paridad: "+s.paridad; t+="\n"; }
+    if (s.type === "cedear" && s.tickers && s.tickers.length) {
+      for (var j = 0; j < s.tickers.length; j++) {
+        var tk = s.tickers[j];
+        if (tk.sym || tk.desc) t += (tk.sym ? tk.sym + ": " : "") + (tk.desc||"") + "\n";
+      }
+    }
+    if (s.type === "cedear" && s.cierre) t += s.cierre + "\n";
+    if (s.type === "fci") { if(s.desc) t+=s.desc+"\n"; if(s.rescate) t+="Rescate: "+s.rescate+(s.rend?" | "+s.rend:"")+"\n"; }
+    if (s.img) t += "[Imagen de tabla adjunta]\n";
+    t += "\n------------------------------------------------\n\n";
+  }
+  t += cierre;
+  return t;
+}
+
+// ─── Copy ─────────────────────────────────────────────────
+function copyHTML() {
+  var content = document.getElementById("mail-preview-body");
+  try {
+    var blob = new Blob([content.innerHTML], {type:"text/html"});
+    var item = new ClipboardItem({
+      "text/html": blob,
+      "text/plain": new Blob([content.innerText], {type:"text/plain"})
+    });
+    navigator.clipboard.write([item]).then(function() {
+      var btn = document.getElementById("copy-html-btn");
+      btn.textContent = "✓ Listo — pegalo en Gmail con Ctrl+V";
+      btn.classList.add("copied");
+      setTimeout(function(){ btn.textContent="⬇ Copiar para pegar en Gmail"; btn.classList.remove("copied"); }, 3500);
+    });
+  } catch(e) {
+    navigator.clipboard.writeText(content.innerText);
+    alert("Copiado como texto plano.");
+  }
+}
+
+function copyText() {
+  var txt = document.getElementById("text-out").textContent;
+  navigator.clipboard.writeText(txt).then(function() {
+    var btn = document.getElementById("copy-text-btn");
+    btn.textContent = "✓ Copiado";
+    btn.classList.add("copied");
+    setTimeout(function(){ btn.textContent="⬇ Copiar texto"; btn.classList.remove("copied"); }, 2500);
+  });
+}
+</script>
+</body>
+</html>
